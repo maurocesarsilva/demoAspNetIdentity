@@ -81,7 +81,10 @@ namespace Identity.Api.Controllers
 			var rsa = RSA.Create();
 			rsa.ImportFromPem(_privateKey.Trim().ToCharArray());
 
-			var securityKey = new RsaSecurityKey(rsa);
+			var securityKey = new RsaSecurityKey(rsa)
+			{
+				KeyId =  Guid.NewGuid().ToString()
+			};
 			var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSsaPssSha256);
 
 			var claims = new[] { new Claim(JwtRegisteredClaimNames.Sub, Guid.NewGuid().ToString()) };

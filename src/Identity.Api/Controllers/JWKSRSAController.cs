@@ -38,22 +38,26 @@ namespace Identity.Api.Controllers
 		}
 
 
-		private void RenerateJwks()
+		private static void RenerateJwks()
 		{
 			if (_privateJwks != null) return;
 
 			var rsa = RSA.Create(2048);
 			var parametersPrivate = rsa.ExportParameters(includePrivateParameters: true);
-			var securityKey = new RsaSecurityKey(parametersPrivate);
+			var securityKey = new RsaSecurityKey(parametersPrivate)
+			{
+				KeyId = Guid.NewGuid().ToString()
+			};
+
 			_privateJwks = JsonWebKeyConverter.ConvertFromRSASecurityKey(securityKey);
 
 			var parametersPublic = rsa.ExportParameters(includePrivateParameters: false);
 			var securityKeyPublic = new RsaSecurityKey(parametersPublic);
-		   _publicJwks = JsonWebKeyConverter.ConvertFromRSASecurityKey(securityKeyPublic);
+			_publicJwks = JsonWebKeyConverter.ConvertFromRSASecurityKey(securityKeyPublic);
 		}
 
 
-		private string GenerateToken()
+		private static string GenerateToken()
 		{
 			var credentials = new SigningCredentials(_privateJwks, SecurityAlgorithms.RsaSsaPssSha256);
 			var claims = new[] { new Claim(JwtRegisteredClaimNames.Sub, Guid.NewGuid().ToString()) };
@@ -63,7 +67,7 @@ namespace Identity.Api.Controllers
 			return tokenString;
 		}
 
-		private bool ValidateToken(string token)
+		private static bool ValidateToken(string token)
 		{
 			try
 			{
