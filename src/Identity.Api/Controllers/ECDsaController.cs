@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -8,8 +7,8 @@ using System.Security.Cryptography;
 namespace Identity.Api.Controllers
 {
 	[ApiController]
-	[Route("rsa")]
-	public class RSAController : ControllerBase
+	[Route("ecdsa")]
+	public class ECDsaController : ControllerBase
 	{
 		/*
 			 #gerar chave privada
@@ -76,13 +75,14 @@ namespace Identity.Api.Controllers
 		}
 
 
+
 		private string GenerateToken()
 		{
 			var rsa = RSA.Create();
 			rsa.ImportFromPem(_privateKey.Trim().ToCharArray());
 
 			var securityKey = new RsaSecurityKey(rsa);
-			var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSsaPssSha256);
+			var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSha256);
 
 			var claims = new[] { new Claim(JwtRegisteredClaimNames.Sub, Guid.NewGuid().ToString()) };
 
@@ -100,6 +100,7 @@ namespace Identity.Api.Controllers
 				var rsa = RSA.Create();
 				rsa.ImportFromPem(_publicKey.Trim().ToCharArray());
 
+				var tokenHandler = new JwtSecurityTokenHandler();
 				var validationParameters = new TokenValidationParameters
 				{
 					ValidateIssuerSigningKey = true,
@@ -108,7 +109,8 @@ namespace Identity.Api.Controllers
 					ValidateAudience = false,
 				};
 
-				var principal = new JwtSecurityTokenHandler().ValidateToken(token, validationParameters, out SecurityToken validatedToken);
+				SecurityToken validatedToken;
+				var principal = tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
 
 				return true;
 			}
