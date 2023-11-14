@@ -7,20 +7,17 @@ using System.Security.Cryptography;
 namespace Identity.Api.Controllers
 {
 	[ApiController]
-	[Route("oauth")]
-	public class OAuthController : ControllerBase
+	[Route("rsa")]
+	public class RSAController : ControllerBase
 	{
+		/*
+			 #gerar chave privada
+			 openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:2048
 
-		[HttpGet("generate")]
-		public IActionResult Get()
-		{
-			var tokenString = GenerateToken();
-			ValidateToken(tokenString);
-
-			return Ok(tokenString);
-		}
-
-		string privateKey = @"
+			 #gerar chave publica
+			 openssl rsa -pubout -in private_key.pem -out public_key.pem
+		 */
+		private readonly string _privateKey = @"
 											-----BEGIN PRIVATE KEY-----
 								MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC0f+ZZkWDpdps6
 								QZJn/u7b3skd4kEn9jrgXWRNGHxrXjC/+2qo22ymJhdkPFqlyt4YvOIuNqSEmgrb
@@ -51,7 +48,7 @@ namespace Identity.Api.Controllers
 													-----END PRIVATE KEY-----
 								";
 
-		string publicKey = @"
+		private readonly string _publicKey = @"
 							-----BEGIN PUBLIC KEY-----
 							MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtH/mWZFg6XabOkGSZ/7u
 							297JHeJBJ/Y64F1kTRh8a14wv/tqqNtspiYXZDxapcreGLziLjakhJoK24L65yTF
@@ -64,50 +61,63 @@ namespace Identity.Api.Controllers
 						";
 
 
+
+		[HttpGet("generate")]
+		public IActionResult Generate()
+		{
+			return Ok(GenerateToken());
+		}
+
+		[HttpGet("validate")]
+		public IActionResult Validate([FromHeader] string token)
+		{
+			return Ok(ValidateToken(token));
+		}
+
+
+
 		private string GenerateToken()
 		{
 			var rsa = RSA.Create();
-			rsa.ImportFromPem(privateKey.Trim().ToCharArray());
+			rsa.ImportFromPem(_privateKey.Trim().ToCharArray());
 
 			var securityKey = new RsaSecurityKey(rsa);
 			var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSha256);
 
-			var claims = new[] {
-			  new Claim("Name", "mauro"),
-			  // Adicione mais claims conforme necessário
-		  };
+			var claims = new[] { new Claim("Name", "mauro") };
 
 			var token = new JwtSecurityToken("issuer", "audience", claims, expires: DateTime.Now.AddMinutes(30), signingCredentials: credentials);
 
 			var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
-		
-
 			return tokenString;
 		}
 
-		private string ValidateToken(string token)
+		private bool ValidateToken(string token)
 		{
-			var rsa = RSA.Create();
-			rsa.ImportFromPem(publicKey.Trim().ToCharArray());
-
-			var tokenHandler = new JwtSecurityTokenHandler();
-			var validationParameters = new TokenValidationParameters
+			try
 			{
-				ValidateIssuerSigningKey = true,
-				IssuerSigningKey = new RsaSecurityKey(rsa),
-				ValidateIssuer = false,
-				ValidateAudience = false,
-			};
+				var rsa = RSA.Create();
+				rsa.ImportFromPem(_publicKey.Trim().ToCharArray());
 
-			SecurityToken validatedToken;
-			var principal = tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
+				var tokenHandler = new JwtSecurityTokenHandler();
+				var validationParameters = new TokenValidationParameters
+				{
+					ValidateIssuerSigningKey = true,
+					IssuerSigningKey = new RsaSecurityKey(rsa),
+					ValidateIssuer = false,
+					ValidateAudience = false,
+				};
 
-			var claim = principal.Claims.First(claim => claim.Type == "Name");
+				SecurityToken validatedToken;
+				var principal = tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
 
-			return claim.Value;
+				return true;
+			}
+			catch
+			{
+				return false;
+			}
 		}
-
-
 	}
 }
