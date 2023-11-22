@@ -8,25 +8,25 @@ using System.Security.Cryptography;
 namespace Identity.Api.Controllers
 {
 	[ApiController]
-	[Route("jwks-rsa")]
-	public class JWKSRSAController : ControllerBase
+	[Route("jwks-ecdsa")]
+	public class JWKSECDsaController : ControllerBase
 	{
 		private static JsonWebKey _privateJwks;
 		private static JsonWebKey _publicJwks;
 
 
 		[HttpGet("generate-jwks")]
-		public IActionResult GenerateJwksEndPoint()
+		public IActionResult GenerateJwks()
 		{
-			GenerateJwks();
+			Generate();
 
 			return Ok(new { public_jwks = _publicJwks, private_jwks = _privateJwks });
 		}
 
 		[HttpGet("generate")]
-		public IActionResult Generate()
+		public IActionResult GenerateEndPoint()
 		{
-			GenerateJwks();
+			Generate();
 
 			return Ok(GenerateToken());
 		}
@@ -38,28 +38,29 @@ namespace Identity.Api.Controllers
 		}
 
 
-		private static void GenerateJwks()
+		private static void Generate()
 		{
 			if (_privateJwks != null) return;
 
-			var rsa = RSA.Create(2048);
-			var parametersPrivate = rsa.ExportParameters(includePrivateParameters: true);
-			var securityKey = new RsaSecurityKey(parametersPrivate)
+			var ecDsa = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+			var securityKey = new ECDsaSecurityKey(ecDsa)
 			{
 				KeyId = Guid.NewGuid().ToString()
 			};
 
-			_privateJwks = JsonWebKeyConverter.ConvertFromRSASecurityKey(securityKey);
+			_privateJwks = JsonWebKeyConverter.ConvertFromECDsaSecurityKey(securityKey);
 
-			var parametersPublic = rsa.ExportParameters(includePrivateParameters: false);
-			var securityKeyPublic = new RsaSecurityKey(parametersPublic);
-			_publicJwks = JsonWebKeyConverter.ConvertFromRSASecurityKey(securityKeyPublic);
+
+			var parametersPublic = ecDsa.ExportParameters(includePrivateParameters: false);
+			var ecDsaPublic = ECDsa.Create(parametersPublic);
+			var securityKeyPublic = new ECDsaSecurityKey(ecDsaPublic);
+			_publicJwks = JsonWebKeyConverter.ConvertFromECDsaSecurityKey(securityKeyPublic);
 		}
 
 
 		private static string GenerateToken()
 		{
-			var credentials = new SigningCredentials(_privateJwks, SecurityAlgorithms.RsaSsaPssSha256);
+			var credentials = new SigningCredentials(_privateJwks, SecurityAlgorithms.EcdsaSha256);
 			var claims = new[] { new Claim(JwtRegisteredClaimNames.Sub, Guid.NewGuid().ToString()) };
 			var token = new JwtSecurityToken("issuer", "audience", claims, expires: DateTime.Now.AddMinutes(30), signingCredentials: credentials);
 			var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
