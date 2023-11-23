@@ -1,3 +1,4 @@
+using Identity.Api.Extensions;
 using Identity.Application;
 using Identity.Repository;
 
@@ -6,11 +7,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+builder.Services.AddSwagger();
 
 builder.Services.AddScoped<UserService>();
 
+builder.Services.AddJwtAuthorization(builder.Configuration);
 
+//Add configurações do contexto para ef e do asp.net identity
 builder.Services.AddDataBase(builder.Configuration["ConnectionStrings"]);
 
 var app = builder.Build();
@@ -23,8 +27,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
+
+
 app.MapControllers();
+
+//Add metodo para realizar migração do banco ao iniciar alicação
 await app.AddMigrate();
 
 app.Run();
