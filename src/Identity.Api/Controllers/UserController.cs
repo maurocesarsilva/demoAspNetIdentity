@@ -24,7 +24,6 @@ namespace Identity.Api.Controllers
 		[Authorize] //metodo AddJwtAuthorization do class program configura a autenticação
 		public async Task<IActionResult> Get() => Ok(await _userService.Get());
 
-		[HttpPost("login")]
-		public async Task<IActionResult> Login([FromBody] UserLoginRequestDto request) => Ok(await _userService.Login(request));
+		
 	}
 }

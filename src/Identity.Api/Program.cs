@@ -11,6 +11,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwagger();
 
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<OauthService>();
 
 builder.Services.AddJwtAuthorization(builder.Configuration);
 
