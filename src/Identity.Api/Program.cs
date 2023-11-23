@@ -1,11 +1,12 @@
 using Identity.Api.Extensions;
+using Identity.Api.Filters;
 using Identity.Application;
 using Identity.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(c => c.Filters.Add(typeof(ExceptionFilter)));
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwagger();
