@@ -1,6 +1,7 @@
 using Identity.Api.Extensions;
 using Identity.Api.Filters;
 using Identity.Application;
+using Identity.Domain;
 using Identity.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,7 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<OauthService>();
 
 builder.Services.AddJwtAuthorization(builder.Configuration);
+builder.Services.AddIdentity(builder.Configuration);
 
 //Add configurações do contexto para ef e do asp.net identity
 builder.Services.AddDataBase(builder.Configuration["ConnectionStrings"]);
@@ -23,8 +25,8 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-	app.UseSwagger();
-	app.UseSwaggerUI();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();

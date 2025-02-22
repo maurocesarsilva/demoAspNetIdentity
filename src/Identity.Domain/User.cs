@@ -6,5 +6,5 @@ namespace Identity.Domain
 	public class User : IdentityUser
 	{
 		public User() { }
-	}
+    }
 }

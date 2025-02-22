@@ -28,7 +28,6 @@ namespace Identity.Application
 		private string ConstructJwt()
 		{
 
-			//jwk pode ser gerado pelo JWKSECDsaController
 			var privateJwks = new JsonWebKey
 			{
 				Crv = _configuration["jwtKey:privateJwks:crv"],
